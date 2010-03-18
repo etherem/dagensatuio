@@ -4,14 +4,12 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content" >
 	
-	<TextView android:id="@+id/type"
-		android:textSize="12px"
-		android:paddingTop="5px"
-		android:layout_marginLeft="10px"
-		android:layout_width="fill_parent" 
-		android:layout_height="wrap_content"/>
+	<TextView 
+	style="@style/DishTypeTheme"
+		android:id="@+id/type"/>
 		
-	<TextView android:id="@+id/desc" 
+	<TextView android:id="@+id/desc"
+
 		android:layout_below="@+id/type"
 		android:layout_marginLeft="20px"
 		android:layout_width="fill_parent"
