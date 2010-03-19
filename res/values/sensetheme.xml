@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="DishTypeTheme">
-		<item name="android:textColor">#FF0000</item>
 		<item name="android:textSize">12sp</item>
 		<item name="android:paddingTop">5px</item>
 		<item name="android:layout_marginLeft">10px</item>
