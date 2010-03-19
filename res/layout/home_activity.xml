@@ -19,7 +19,8 @@
 	android:layout_height="wrap_content" />
 		
 	<GridView android:id="@+id/days_list"
-		android:layout_below="@id/dish_list"
+		android:layout_alignBottom="@id/dish_list"
+		android:layout_marginBottom="10px"
 		android:numColumns="5"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
