@@ -1,30 +1,28 @@
 package no.ctryti.dagensatuio;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PictureDrawable;
+import android.content.DialogInterface;
 import android.os.Bundle;
-import android.text.style.UpdateLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.SimpleAdapter.ViewBinder;
 
 public class HomeActivity extends Activity {
 
@@ -42,15 +40,6 @@ public class HomeActivity extends Activity {
 		setContentView(R.layout.home_activity);
 		
 		String[] weekDays = getResources().getStringArray(R.array.weekdays);
-		/* Date textfield 
-		Calendar today = Calendar.getInstance(); 
-
-		String[] months = getResources().getStringArray(R.array.months);
-		String buildToday = new String(""+weekDays[today.get(Calendar.DAY_OF_WEEK) - 1] +", " 
-				+today.get(Calendar.DAY_OF_MONTH) +"." +months[today.get(Calendar.MONTH)]);
-		TextView tv = (TextView) findViewById(R.id.period);
-		tv.setText(buildToday);
-		*/
 		
 		/* The list of dishes */
 		mDbAdapter = new DatabaseAdapter(this);
@@ -79,6 +68,49 @@ public class HomeActivity extends Activity {
 		GridView days = (GridView) findViewById(R.id.days_list);
 		days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
 		days.setOnItemClickListener(new GridItemListener(this));
+		
+		/* Café button (home icon) */
+		RelativeLayout right_layout = (RelativeLayout) findViewById(R.id.right_button_layout);
+		ImageButton home_button = (ImageButton) findViewById(R.id.right_button);
+		home_button.setOnClickListener(new HomeButtonListener(this));
+		
+	}
+	
+	private class HomeButtonListener implements View.OnClickListener {
+		private Context mCtx;
+		
+		
+		public HomeButtonListener(Context ctx) {
+			this.mCtx = ctx;
+		}
+		
+		
+		/* TODO: Needs severe improvement */
+		@Override
+		public void onClick(View v) {
+			AlertDialog.Builder placesDialog = new AlertDialog.Builder(mCtx);
+			String[] places = getResources().getStringArray(R.array.placesnames);
+			placesDialog.setTitle("Velg et sted");
+			placesDialog.setItems(places, new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					String[] places = getResources().getStringArray(R.array.placesnames);
+					ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(places[which], "Mandag");
+					ListView list = (ListView)findViewById(R.id.dish_list);
+					if(list != null) {
+						DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
+						list.setAdapter(adapter);
+					}
+					dialog.cancel();
+				}
+			});
+			
+			System.out.println("Home Button Clicked");
+			AlertDialog al = placesDialog.create();
+			al.show();
+		}
+		
 	}
 
 	private class ImageAdapter extends BaseAdapter {
@@ -114,8 +146,9 @@ public class HomeActivity extends Activity {
 			String day = mList.get(position);
 			if(convertView==null){
 				v = View.inflate(mCtx, R.layout.days_item, null);
-				TextView tv = (TextView) v.findViewById(R.id.day_text);
-				tv.setText(day);
+				TextView txt = (TextView) v.findViewById(R.id.day_text);
+				txt.setText(day);
+				//b1.setOnTouchListener(new ButtonListener(mCtx, day));
 
 			} else {
 				v = convertView;
@@ -167,9 +200,9 @@ public class HomeActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		menu.add(Menu.NONE, REFRESH_ID, Menu.NONE, "Refresh");
-		menu.add(Menu.NONE, CLEAR_DB_ID, Menu.NONE, "Clear database");
-		return true;
+		menu.add(Menu.NONE, REFRESH_ID, Menu.NONE, "Refresh").setIcon(R.drawable.refresh);
+		menu.add(Menu.NONE, CLEAR_DB_ID, Menu.NONE, "Clear database").setIcon(R.drawable.trashcan);
+		return true; 
 	}
 
 	@Override
@@ -194,18 +227,17 @@ public class HomeActivity extends Activity {
 		}
 
 		@Override
-		public void onItemClick(AdapterView parent, View txtView, int pos,
+		public void onItemClick(AdapterView parent, View v, int pos,
 				long rowID) {
-			String[] mDays = getResources().getStringArray(R.array.weekdays);
-			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", mDays[pos+1]);
+			RelativeLayout rl = (RelativeLayout) v;
+			TextView txt = (TextView) rl.getChildAt(0);
+			String day = txt.getText().toString();
+			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", day);
 			ListView list = (ListView)findViewById(R.id.dish_list);
-		
 			if(list != null) {
 				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
 				list.setAdapter(adapter);
 			}
-			
 		}
-		
 	}
 }

@@ -28,4 +28,16 @@
 		<item>November</item>
 		<item>Desember</item>
 	</string-array>
+	<string-array name="placesnames">
+		<item>Forskningsveien</item>
+		<item>Frederikke kaf\u00e9</item>
+		<item>Informatikkafeen</item>
+		<item>Kafe Helga</item>
+		<item>Norges idrettsh\u00f8gskoles kafe</item>
+		<item>Kafe Nova</item>
+		<item>Kafe Seilduken</item>
+		<item>SV Kafeen</item>
+		<item>Odontologikafeen</item>
+		<item>Preklinisk kafe</item>
+	</string-array>
 </resources>
