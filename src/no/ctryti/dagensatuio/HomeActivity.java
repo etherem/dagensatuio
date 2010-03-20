@@ -101,6 +101,8 @@ public class HomeActivity extends Activity {
 					if(list != null) {
 						DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
 						list.setAdapter(adapter);
+						TextView home_bottom = (TextView) findViewById(R.id.home_bottom);
+						home_bottom.setText(places[which]);
 					}
 					dialog.cancel();
 				}
@@ -232,7 +234,9 @@ public class HomeActivity extends Activity {
 			RelativeLayout rl = (RelativeLayout) v;
 			TextView txt = (TextView) rl.getChildAt(0);
 			String day = txt.getText().toString();
-			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", day);
+			TextView tv = (TextView) findViewById(R.id.home_bottom);
+			String place = tv.getText().toString();
+			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(place, day);
 			ListView list = (ListView)findViewById(R.id.dish_list);
 			if(list != null) {
 				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
