@@ -1,6 +1,8 @@
 package no.ctryti.dagensatuio;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
@@ -10,10 +12,11 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -22,50 +25,59 @@ import android.widget.TextView;
 
 public class HomeActivity extends Activity {
 
+	
+	private static final int REFRESH_ID = 1;
+	private static final int CLEAR_DB_ID = 2;
+	
+	private static final String TAG = "HomeActivity";
+	
 	DatabaseAdapter mDbAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-
 		setContentView(R.layout.home_activity);
-
+		
+		/* Date textfield */
+		Calendar today = Calendar.getInstance(); 
+		String[] weekDays = getResources().getStringArray(R.array.weekdays);
+		String[] months = getResources().getStringArray(R.array.months);
+		String buildToday = new String(""+weekDays[today.get(Calendar.DAY_OF_WEEK) - 1] +", " 
+				+today.get(Calendar.DAY_OF_MONTH) +"." +months[today.get(Calendar.MONTH)]);
+		TextView tv = (TextView) findViewById(R.id.period);
+		tv.setText(buildToday);
+		
+		
+		/* The list of dishes */
 		mDbAdapter = new DatabaseAdapter(this);
-		mDbAdapter.open();
-
-		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("Frederikke kafé");
+		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("Frederikke kaf�");
 
 		System.out.println("Items:");
 		for(DinnerItem item : items)
-			System.out.println(item.getDescription());
-
-		ListView innerList = (ListView)findViewById(R.id.dish_list);
-
-		if(innerList != null) {
-
+			Log.i(TAG, item.getDescription());
+		
+		ListView list = (ListView)findViewById(R.id.dish_list);
+	
+		if(list != null) {
 			DinnerItemAdapter adapter = new DinnerItemAdapter(this, R.layout.custom_list_row, items);
-			innerList.setAdapter(adapter);
+			list.setAdapter(adapter);
 		}
 
-		/*Test code start here*/
-		ArrayList<Integer> icons = new ArrayList<Integer>();
-		icons.add(R.drawable.icon_monday);
-		icons.add(R.drawable.icon_tuesday);
-		icons.add(R.drawable.icon_wednesday);
-		icons.add(R.drawable.icon_thursday);
-		icons.add(R.drawable.icon_friday);
+		/*Grid of days*/
+		ArrayList<String> icons = new ArrayList<String>();
+		for (int i = 1; i < 6; i++) {
+			icons.add(weekDays[i]);
+		}
 		GridView days = (GridView) findViewById(R.id.days_list);
-		days.setAdapter(new ImageAdapter(this, R.layout.day_icon, icons));
-
+		days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
 	}
 
 	private class ImageAdapter extends BaseAdapter {
 		private Context mCtx;
 		private int mRowResID;
-		private List<Integer> mList;
+		private List<String> mList;
 		
-		public ImageAdapter(Context ctx, int rowResID, List<Integer> list){
+		public ImageAdapter(Context ctx, int rowResID, List<String> list){
 			this.mCtx = ctx;
 			this.mRowResID = rowResID;
 			this.mList = list;
@@ -90,12 +102,11 @@ public class HomeActivity extends Activity {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View v;
-			int iconDrawableID = mList.get(position);
+			String day = mList.get(position);
 			if(convertView==null){
-				v = View.inflate(mCtx, R.layout.day_icon, null);
-				ImageView iv = (ImageView)v.findViewById(R.id.day_icon);
-				iv.setImageResource(iconDrawableID);
-				iv.setAdjustViewBounds(true);
+				v = View.inflate(mCtx, R.layout.days_item, null);
+				TextView tv = (TextView) v.findViewById(R.id.day_text);
+				tv.setText(day);
 
 			} else {
 				v = convertView;
@@ -109,11 +120,8 @@ public class HomeActivity extends Activity {
 
 		private Context mCtx;
 		private List<DinnerItem> mList;
-		private int mRowResID;
-
 		public DinnerItemAdapter(Context ctx, int rowResID, List<DinnerItem> list) {
 			mCtx = ctx;
-			mRowResID = rowResID;
 			mList = list;
 		}
 
@@ -133,20 +141,38 @@ public class HomeActivity extends Activity {
 		}
 
 		@Override
-		public View getView(int arg0, View arg1, ViewGroup arg2) {
-			DinnerItem item = mList.get(arg0);
-			//LayoutInflater inflater = LayoutInflater.from(mCtx);
-
-			View inflatedView = View.inflate(mCtx, R.layout.custom_list_row, null);
-
-			//View v = inflater.inflate(mRowResID, arg2);
-			TextView type = (TextView)inflatedView.findViewById(R.id.type);
+		public View getView(int pos, View convertView, ViewGroup parent) {
+			DinnerItem item = mList.get(pos);
+			View row = convertView;  
+			if(row == null)	
+				row = View.inflate(mCtx, R.layout.custom_list_row, null);
+			
+			TextView type = (TextView)row.findViewById(R.id.type);
 			type.setText(item.getType());
-			TextView desc = (TextView)inflatedView.findViewById(R.id.desc);
+			TextView desc = (TextView)row.findViewById(R.id.desc);
 			desc.setText(item.getDescription());
-
-			return inflatedView;
+			return row;
 		}
+	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		menu.add(Menu.NONE, REFRESH_ID, Menu.NONE, "Refresh");
+		menu.add(Menu.NONE, CLEAR_DB_ID, Menu.NONE, "Clear database");
+		return true;
+	}
 
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		switch (item.getItemId()) {
+
+		case REFRESH_ID:
+			new RefreshDbTask(mDbAdapter).execute();
+			break;
+		case CLEAR_DB_ID:
+			mDbAdapter.reCreateDatabase();
+			break;
+		}
+		return true;
 	}
 }
