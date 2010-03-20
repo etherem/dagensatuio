@@ -16,7 +16,7 @@ public class DatabaseAdapter {
 
 	private static final String DATABASE_NAME = "dagensatuio.db";
 	private static final String TAG = "DatabaseAdapter";
-	
+
 	/* Database column names */
 	public static final String PLACE = "place";
 	public static final String DAY = "day";
@@ -33,9 +33,9 @@ public class DatabaseAdapter {
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
 	private Context mCtx;
-	
+
 	private static class DatabaseHelper extends SQLiteOpenHelper {
-		
+
 		private static final String TAG = "DatabaseAdapter$DatabaseHelper";
 		private static final int DATABASE_VERSION = 6;
 
@@ -75,7 +75,7 @@ public class DatabaseAdapter {
 			"\tforeign key (" + TYPE  + ") REFERENCES " + TYPE  + ", \n" + //"(_id)," +
 			"\tunique (" + DESC +", " + PERIOD + ", " + PLACE + ", " + DAY + ", \n" + TYPE + ")\n" +
 			");";
-	
+
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		}
@@ -141,7 +141,8 @@ public class DatabaseAdapter {
 	public Cursor fetchAllPlaces() {
 		return mDb.query(PLACE, new String[] {ROWID, PLACE}, null, null, null, null, null);
 	}
-	
+
+
 	public long insert(ContentValues values) {
 		boolean valid = true;
 		if(!values.containsKey(DAY))
@@ -183,7 +184,7 @@ public class DatabaseAdapter {
 		cv.put(GLUTEN, values.getAsInteger(GLUTEN));
 		cv.put(LAKTOSE, values.getAsInteger(LAKTOSE));
 		cv.put(PERIOD, values.getAsString(PERIOD));
-				
+
 		long rowId = mDb.insert(DISH, null, cv);
 		if(rowId == -1) 
 			Log.e(TAG, "Failed to insert: " + values.getAsString(PLACE)+", "+ values.getAsString(PERIOD)+ "," +values.getAsString(DAY) + ", " + values.getAsString(TYPE) + "," + values.getAsString(DESC));
@@ -207,30 +208,31 @@ public class DatabaseAdapter {
 		c.close();
 		return rowId;
 	}
-	
+
 	public ArrayList<DinnerItem> getItems(String place) {
-		
+
 		SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
-		
-		builder.setTables(DISH+" JOIN "+PLACE+" ON "+DISH+"."+PLACE+" = "+PLACE+"._id JOIN "+TYPE+" ON "+DISH+"."+TYPE+" = "+ TYPE+"._id JOIN "+DAY+" ON "+DISH+"."+DAY+" = "+DAY+"._id");
-		
+
+		builder.setTables(DISH+" JOIN "+PLACE+" ON "+DISH+"."+PLACE+" = "+PLACE+"._id JOIN "+TYPE+" ON "+DISH+"."+TYPE+" = "
+				+ TYPE+"._id JOIN "+DAY+" ON "+DISH+"."+DAY+" = "+DAY+"._id");
+
 		Cursor c = builder.query(mDbHelper.getReadableDatabase(),null,null, null,null,null,null);
-		
+
 		ArrayList<DinnerItem> list = new ArrayList<DinnerItem>();
 		DinnerItem item;
-		
+
 		if(c.moveToFirst()) {
 			String desc, day, period, type;
-			
+
 			do {
 				desc = c.getString(3);
 				period = c.getString(4);
 				day = c.getString(1);
 				type = c.getString(2);
-				
+
 				item = new DinnerItem(place, day, type, desc, period, false, false);
 				list.add(item);
-				
+
 			} while(c.moveToNext());
 		}
 		close();
@@ -241,25 +243,59 @@ public class DatabaseAdapter {
 	public ArrayList<DinnerItem> getAllFromPlace(String place) {
 		open();
 		//Cursor c = mDb.query(KEY_DISH, new String[] {KEY_ROWID, KEY_PLACE, KEY_DAY, KEY_PERIOD, KEY_TYPE, KEY_DESC }, KEY_PLACE+"='2'", null, null, null, null);
-		String query = "SELECT " + PLACE+"."+PLACE+", "+DAY+"."+DAY+", "+TYPE+"."+TYPE+", "+DISH+"."+DESC+", "+DISH+"."+PERIOD+" FROM "+DISH+" JOIN "+PLACE+" ON "+DISH+"."+PLACE+" = "+PLACE+"._id JOIN "+TYPE+" ON "+DISH+"."+TYPE+" = "+ TYPE+"._id JOIN "+DAY+" ON "+DISH+"."+DAY+" = "+DAY+"._id WHERE "+PLACE+"."+PLACE+"='"+place+"'";
+		String query = "SELECT " + PLACE+"."+PLACE+", "+DAY+"."+DAY+", "+TYPE+"."+TYPE+", "+DISH+"."+DESC+", "+DISH+"."+PERIOD
+		+" FROM "+DISH+" JOIN "+PLACE+" ON "+DISH+"."+PLACE+" = "+PLACE+"._id JOIN "+TYPE+" ON "+DISH+"."+TYPE+" = "+ TYPE
+		+"._id JOIN "+DAY+" ON "+DISH+"."+DAY+" = "+DAY+"._id WHERE "+PLACE+"."+PLACE+"='"+place+"'";
 		//String query = "SELECT * FROM "+KEY_DISH+" JOIN "+KEY_PLACE+" ON "+KEY_DISH+"."+KEY_PLACE+" = "+KEY_PLACE+"._id JOIN "+KEY_TYPE+" ON "+KEY_DISH+"."+KEY_TYPE+" = "+ KEY_TYPE+"._id JOIN "+KEY_DAY+" ON "+KEY_DISH+"."+KEY_DAY+" = "+KEY_DAY+"._id WHERE "+KEY_PLACE+"."+KEY_PLACE+"='"+place+"'";
 		Cursor c = mDb.rawQuery(query, null);
-		
+
 		ArrayList<DinnerItem> list = new ArrayList<DinnerItem>();
 		DinnerItem item;
-		
+
 		if(c.moveToFirst()) {
-			String desc, day, period, type;
-			
+			String desc, day, period, type; 
+
 			do {
 				desc = c.getString(3);
 				period = c.getString(4);
 				day = c.getString(1);
 				type = c.getString(2);
-				
+
 				item = new DinnerItem(place, day, type, desc, period, false, false);
 				list.add(item);
-				
+
+			} while(c.moveToNext());
+		}
+		close();
+		c.close();
+		return list;
+	}
+
+	public ArrayList<DinnerItem> getAllFromPlaceAtDay(String place, String requestedDay) {
+		open();
+		//Cursor c = mDb.query(KEY_DISH, new String[] {KEY_ROWID, KEY_PLACE, KEY_DAY, KEY_PERIOD, KEY_TYPE, KEY_DESC }, KEY_PLACE+"='2'", null, null, null, null);
+		String query = "SELECT " + PLACE+"."+PLACE+", "+DAY+"."+DAY+", "+TYPE+"."+TYPE+", "+DISH+"."+DESC+", "+DISH+"."+PERIOD
+		+" FROM "+DISH+" JOIN "+PLACE+" ON "+DISH+"."+PLACE+" = "+PLACE+"._id JOIN "+TYPE+" ON "+DISH+"."+TYPE+" = "+ TYPE
+		+"._id JOIN "+DAY+" ON "+DISH+"."+DAY+" = "+DAY+"._id WHERE "+PLACE+"."+PLACE+"='"+place+"'";
+		//String query = "SELECT * FROM "+KEY_DISH+" JOIN "+KEY_PLACE+" ON "+KEY_DISH+"."+KEY_PLACE+" = "+KEY_PLACE+"._id JOIN "+KEY_TYPE+" ON "+KEY_DISH+"."+KEY_TYPE+" = "+ KEY_TYPE+"._id JOIN "+KEY_DAY+" ON "+KEY_DISH+"."+KEY_DAY+" = "+KEY_DAY+"._id WHERE "+KEY_PLACE+"."+KEY_PLACE+"='"+place+"'";
+		Cursor c = mDb.rawQuery(query, null);
+
+		ArrayList<DinnerItem> list = new ArrayList<DinnerItem>();
+		DinnerItem item = null;
+
+		if(c.moveToFirst()) {
+			String desc, day, period, type;
+
+			do {
+				desc = c.getString(3);
+				period = c.getString(4);
+				day = c.getString(1);
+				type = c.getString(2);
+				if (requestedDay.equals(day)) {
+					item = new DinnerItem(place, day, type, desc, period, false, false);
+					list.add(item);
+				}
+
 			} while(c.moveToNext());
 		}
 		close();

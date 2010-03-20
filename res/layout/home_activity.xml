@@ -16,14 +16,14 @@
 
 
 	<GridView android:id="@+id/days_list" android:numColumns="5"
-	android:columnWidth="50px"
 		android:layout_above="@id/home_bottom"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" 
+		android:layout_width="wrap_content" android:layout_height="wrap_content" 
 		android:gravity="center_horizontal"/> 
 
 	<ListView android:id="@+id/dish_list" android:layout_below="@id/period"
 	android:layout_above="@id/days_list"
-		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:cacheColorHint="#00000000" />
 
 	<!--	<TextView android:id="@+id/bottom"-->
 	<!--		android:layout_width="fill_parent"-->

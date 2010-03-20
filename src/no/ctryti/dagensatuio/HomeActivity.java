@@ -12,15 +12,18 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
+import android.text.style.UpdateLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class HomeActivity extends Activity {
@@ -51,8 +54,8 @@ public class HomeActivity extends Activity {
 		
 		/* The list of dishes */
 		mDbAdapter = new DatabaseAdapter(this);
-		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("Frederikke kaf�");
-
+		//ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("SV Kafeen");
+		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
 		TextView top_tv = (TextView)findViewById(R.id.period);
 		
 		top_tv.setText(items.get(0).getPeriod());
@@ -75,6 +78,7 @@ public class HomeActivity extends Activity {
 		}
 		GridView days = (GridView) findViewById(R.id.days_list);
 		days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
+		days.setOnItemClickListener(new GridItemListener(this));
 	}
 
 	private class ImageAdapter extends BaseAdapter {
@@ -121,10 +125,11 @@ public class HomeActivity extends Activity {
 
 	}
 
-	private class DinnerItemAdapter extends BaseAdapter {
+	protected class DinnerItemAdapter extends BaseAdapter {
 
 		private Context mCtx;
 		private List<DinnerItem> mList;
+		
 		public DinnerItemAdapter(Context ctx, int rowResID, List<DinnerItem> list) {
 			mCtx = ctx;
 			mList = list;
@@ -179,5 +184,28 @@ public class HomeActivity extends Activity {
 			break;
 		}
 		return true;
+	}
+	
+	private class GridItemListener implements AdapterView.OnItemClickListener {
+		Context mCtx;
+		
+		public GridItemListener(Context ctx) {
+			mCtx = ctx;
+		}
+
+		@Override
+		public void onItemClick(AdapterView parent, View txtView, int pos,
+				long rowID) {
+			String[] mDays = getResources().getStringArray(R.array.weekdays);
+			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", mDays[pos+1]);
+			ListView list = (ListView)findViewById(R.id.dish_list);
+		
+			if(list != null) {
+				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
+				list.setAdapter(adapter);
+			}
+			
+		}
+		
 	}
 }
