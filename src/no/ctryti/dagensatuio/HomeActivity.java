@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -26,65 +27,76 @@ import android.widget.SimpleAdapter.ViewBinder;
 
 public class HomeActivity extends Activity {
 
-	
+
 	private static final int REFRESH_ID = 1;
 	private static final int CLEAR_DB_ID = 2;
-	
+
 	private static final String TAG = "HomeActivity";
-	
+
 	DatabaseAdapter mDbAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.home_activity);
-		
+
 		String[] weekDays = getResources().getStringArray(R.array.weekdays);
-		
+
 		/* The list of dishes */
 		mDbAdapter = new DatabaseAdapter(this);
 		//ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("SV Kafeen");
-		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
-		TextView top_tv = (TextView)findViewById(R.id.period);
-		
-		top_tv.setText(items.get(0).getPeriod());
-		
-		System.out.println("Items:");
-		for(DinnerItem item : items)
-			Log.i(TAG, item.getDescription());
-		
-		ListView list = (ListView)findViewById(R.id.dish_list);
-	
-		if(list != null) {
-			DinnerItemAdapter adapter = new DinnerItemAdapter(this, R.layout.custom_list_row, items);
-			list.setAdapter(adapter);
+
+
+		if (mDbAdapter == null) { 
+			System.out.println("The Database is empty");
+			new RefreshDbTask(mDbAdapter).execute();
+		} else if (mDbAdapter != null) {
+			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
+			if (items.size() > 0) {
+				TextView home_bottom = (TextView) findViewById(R.id.home_bottom);
+				home_bottom.setText("SV Kafeen");
+				TextView top_tv = (TextView)findViewById(R.id.period);
+
+				top_tv.setText(items.get(0).getPeriod());
+
+				System.out.println("Items:");
+				for(DinnerItem item : items)  
+					Log.i(TAG, item.getDescription());
+
+				ListView list = (ListView)findViewById(R.id.dish_list);
+
+				if(list != null) {
+					DinnerItemAdapter adapter = new DinnerItemAdapter(this, R.layout.custom_list_row, items);
+					list.setAdapter(adapter);
+				}
+
+				/*Grid of days */
+				ArrayList<String> icons = new ArrayList<String>();
+				for (int i = 1; i < 6; i++) {
+					icons.add(weekDays[i]);
+				}
+				GridView days = (GridView) findViewById(R.id.days_list);
+				days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
+				days.setOnItemClickListener(new GridItemListener(this));
+
+				/* Café button (home icon) */
+				RelativeLayout right_layout = (RelativeLayout) findViewById(R.id.right_button_layout);
+				ImageButton home_button = (ImageButton) findViewById(R.id.right_button);
+				home_button.setOnClickListener(new HomeButtonListener(this));
+			}
 		}
 
-		/*Grid of days*/
-		ArrayList<String> icons = new ArrayList<String>();
-		for (int i = 1; i < 6; i++) {
-			icons.add(weekDays[i]);
-		}
-		GridView days = (GridView) findViewById(R.id.days_list);
-		days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
-		days.setOnItemClickListener(new GridItemListener(this));
-		
-		/* Café button (home icon) */
-		RelativeLayout right_layout = (RelativeLayout) findViewById(R.id.right_button_layout);
-		ImageButton home_button = (ImageButton) findViewById(R.id.right_button);
-		home_button.setOnClickListener(new HomeButtonListener(this));
-		
 	}
-	
+
 	private class HomeButtonListener implements View.OnClickListener {
 		private Context mCtx;
-		
-		
+
+
 		public HomeButtonListener(Context ctx) {
 			this.mCtx = ctx;
 		}
-		
-		
+
+
 		/* TODO: Needs severe improvement */
 		@Override
 		public void onClick(View v) {
@@ -92,7 +104,7 @@ public class HomeActivity extends Activity {
 			String[] places = getResources().getStringArray(R.array.placesnames);
 			placesDialog.setTitle("Velg et sted");
 			placesDialog.setItems(places, new DialogInterface.OnClickListener() {
-				
+
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					String[] places = getResources().getStringArray(R.array.placesnames);
@@ -107,19 +119,19 @@ public class HomeActivity extends Activity {
 					dialog.cancel();
 				}
 			});
-			
+
 			System.out.println("Home Button Clicked");
 			AlertDialog al = placesDialog.create();
 			al.show();
 		}
-		
+
 	}
 
 	private class ImageAdapter extends BaseAdapter {
 		private Context mCtx;
 		private int mRowResID;
 		private List<String> mList;
-		
+
 		public ImageAdapter(Context ctx, int rowResID, List<String> list){
 			this.mCtx = ctx;
 			this.mRowResID = rowResID;
@@ -164,7 +176,7 @@ public class HomeActivity extends Activity {
 
 		private Context mCtx;
 		private List<DinnerItem> mList;
-		
+
 		public DinnerItemAdapter(Context ctx, int rowResID, List<DinnerItem> list) {
 			mCtx = ctx;
 			mList = list;
@@ -191,7 +203,7 @@ public class HomeActivity extends Activity {
 			View row = convertView;  
 			if(row == null)	
 				row = View.inflate(mCtx, R.layout.custom_list_row, null);
-			
+
 			TextView type = (TextView)row.findViewById(R.id.type);
 			type.setText(item.getType());
 			TextView desc = (TextView)row.findViewById(R.id.desc);
@@ -212,7 +224,8 @@ public class HomeActivity extends Activity {
 		switch (item.getItemId()) {
 
 		case REFRESH_ID:
-			new RefreshDbTask(mDbAdapter).execute();
+			RefreshDbTask rDT = new RefreshDbTask(mDbAdapter);
+			rDT.execute(null);
 			break;
 		case CLEAR_DB_ID:
 			mDbAdapter.reCreateDatabase();
@@ -220,10 +233,10 @@ public class HomeActivity extends Activity {
 		}
 		return true;
 	}
-	
+
 	private class GridItemListener implements AdapterView.OnItemClickListener {
 		Context mCtx;
-		
+
 		public GridItemListener(Context ctx) {
 			mCtx = ctx;
 		}
