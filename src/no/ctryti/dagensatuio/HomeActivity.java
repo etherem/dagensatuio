@@ -38,20 +38,25 @@ public class HomeActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.home_activity);
 		
-		/* Date textfield */
-		Calendar today = Calendar.getInstance(); 
 		String[] weekDays = getResources().getStringArray(R.array.weekdays);
+		/* Date textfield 
+		Calendar today = Calendar.getInstance(); 
+
 		String[] months = getResources().getStringArray(R.array.months);
 		String buildToday = new String(""+weekDays[today.get(Calendar.DAY_OF_WEEK) - 1] +", " 
 				+today.get(Calendar.DAY_OF_MONTH) +"." +months[today.get(Calendar.MONTH)]);
 		TextView tv = (TextView) findViewById(R.id.period);
 		tv.setText(buildToday);
-		
+		*/
 		
 		/* The list of dishes */
 		mDbAdapter = new DatabaseAdapter(this);
 		ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("Frederikke kaf�");
 
+		TextView top_tv = (TextView)findViewById(R.id.period);
+		
+		top_tv.setText(items.get(0).getPeriod());
+		
 		System.out.println("Items:");
 		for(DinnerItem item : items)
 			Log.i(TAG, item.getDescription());

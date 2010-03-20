@@ -25,9 +25,6 @@
 	android:layout_above="@id/days_list"
 		android:layout_width="fill_parent" android:layout_height="wrap_content" />
 
-
-
-
 	<!--	<TextView android:id="@+id/bottom"-->
 	<!--		android:layout_width="fill_parent"-->
 </RelativeLayout>
