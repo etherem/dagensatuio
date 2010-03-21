@@ -16,15 +16,15 @@
 		android:text="Frederikke kaf\u00e9" />
 
 	<GridView android:id="@+id/days_list" android:numColumns="5"
-		android:layout_above="@id/home_bottom" android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:gravity="center_horizontal"
-		android:background="#00000000" android:focusable="false" 
-		android:focusableInTouchMode="false"/>
+		android:layout_above="@id/home_bottom" android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:background="#00000000" android:horizontalSpacing="-1px"/>
 
 	<RelativeLayout style="@style/ButtonsLayoutTheme" android:id="@+id/left_button_layout"
 		android:layout_toLeftOf="@id/home_bottom" android:layout_alignLeft="@id/days_list">
 		<ImageButton android:id="@+id/left_button" style="@style/ButtonsTheme"
-			android:src="@drawable/refresh" />
+			android:src="@drawable/refresh"  />
 	</RelativeLayout>
 
 	<RelativeLayout style="@style/ButtonsLayoutTheme" android:id="@+id/right_button_layout"

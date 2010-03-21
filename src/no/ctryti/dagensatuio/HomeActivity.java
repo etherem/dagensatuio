@@ -1,6 +1,7 @@
 package no.ctryti.dagensatuio;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import android.app.Activity;
@@ -48,7 +49,6 @@ public class HomeActivity extends Activity {
 
 
 		if (mDbAdapter == null) { 
-			System.out.println("The Database is empty");
 			new RefreshDbTask(mDbAdapter).execute();
 		} else if (mDbAdapter != null) {
 			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
@@ -70,13 +70,9 @@ public class HomeActivity extends Activity {
 					list.setAdapter(adapter);
 				}
 
-				/*Grid of days */
-				ArrayList<String> icons = new ArrayList<String>();
-				for (int i = 1; i < 6; i++) {
-					icons.add(weekDays[i]);
-				}
+				/*Grid of days */ 
 				GridView days = (GridView) findViewById(R.id.days_list);
-				days.setAdapter(new ImageAdapter(this, R.layout.days_item, icons));
+				days.setAdapter(new ImageAdapter(this, R.layout.days_item, Arrays.asList(weekDays)));
 				days.setOnItemClickListener(new GridItemListener(this));
 
 				/* Café button (home icon) */
@@ -127,7 +123,7 @@ public class HomeActivity extends Activity {
 
 	}
 
-	private class ImageAdapter extends BaseAdapter {
+	protected class ImageAdapter extends BaseAdapter {
 		private Context mCtx;
 		private int mRowResID;
 		private List<String> mList;
@@ -140,7 +136,6 @@ public class HomeActivity extends Activity {
 
 		@Override
 		public int getCount() {
-			// TODO Auto-generated method stub
 			return mList.size();
 		}
 
@@ -240,16 +235,14 @@ public class HomeActivity extends Activity {
 		public GridItemListener(Context ctx) {
 			mCtx = ctx;
 		}
-
+ 
 		@Override
 		public void onItemClick(AdapterView parent, View v, int pos,
 				long rowID) {
-			RelativeLayout rl = (RelativeLayout) v;
-			TextView txt = (TextView) rl.getChildAt(0);
-			String day = txt.getText().toString();
+			String[] weekDays = getResources().getStringArray(R.array.weekdays_full); 
 			TextView tv = (TextView) findViewById(R.id.home_bottom);
 			String place = tv.getText().toString();
-			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(place, day);
+			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(place, weekDays[pos]);
 			ListView list = (ListView)findViewById(R.id.dish_list);
 			if(list != null) {
 				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);

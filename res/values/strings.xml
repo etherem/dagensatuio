@@ -6,12 +6,17 @@
 			There are 3 fridays because ctryti saw no point in showing saturday
 			and sunday = hack
 		-->
-		<item>Fredag</item>
+		<item>MAN</item>
+		<item>TIR</item>
+		<item>ONS</item>
+		<item>TOR</item>
+		<item>FRE</item>
+	</string-array>
+		<string-array name="weekdays_full">
 		<item>Mandag</item>
 		<item>Tirsdag</item>
 		<item>Onsdag</item>
 		<item>Torsdag</item>
-		<item>Fredag</item>
 		<item>Fredag</item>
 	</string-array>
 	<string-array name="months">

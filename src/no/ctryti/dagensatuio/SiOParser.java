@@ -139,7 +139,7 @@ public class SiOParser {
 		/* The current token should now be "Mandag" */
 		for (int i = 0; i < 5; i++) {
 			/* Frederikke Kafe is a special case, with extra shit html */
-			if (place.equals("Frederikke kafé")) {
+			if (place.equals("Frederikke kaf\u00e9")) {
 				menuEntries.addAll(Arrays.asList(parseFrederikke(i)));
 			} else if(place.equals("SV Kafeen")) {
 				menuEntries.addAll(Arrays.asList(parseSV(i)));
