@@ -53,9 +53,9 @@ public class HomeActivity extends Activity {
 		} else if (mDbAdapter != null) {
 			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
 			if (items.size() > 0) {
-				TextView home_bottom = (TextView) findViewById(R.id.home_bottom);
+				TextView home_bottom = (TextView) findViewById(R.id.period);
 				home_bottom.setText("SV Kafeen");
-				TextView top_tv = (TextView)findViewById(R.id.period);
+				TextView top_tv = (TextView)findViewById(R.id.home_bottom);
 
 				top_tv.setText(items.get(0).getPeriod());
 
@@ -109,7 +109,7 @@ public class HomeActivity extends Activity {
 					if(list != null) {
 						DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
 						list.setAdapter(adapter);
-						TextView home_bottom = (TextView) findViewById(R.id.home_bottom);
+						TextView home_bottom = (TextView) findViewById(R.id.period);
 						home_bottom.setText(places[which]);
 					}
 					dialog.cancel();
@@ -240,13 +240,13 @@ public class HomeActivity extends Activity {
 		public void onItemClick(AdapterView parent, View v, int pos,
 				long rowID) {
 			String[] weekDays = getResources().getStringArray(R.array.weekdays_full); 
-			TextView tv = (TextView) findViewById(R.id.home_bottom);
+			TextView tv = (TextView) findViewById(R.id.period);
 			String place = tv.getText().toString();
 			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(place, weekDays[pos]);
 			ListView list = (ListView)findViewById(R.id.dish_list);
 			if(list != null) {
 				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
-				list.setAdapter(adapter);
+		 		list.setAdapter(adapter);
 			}
 		}
 	}
