@@ -10,5 +10,4 @@
 		android:textSize="6pt" android:layout_marginLeft="20px"
 		android:layout_marginRight="5px" android:layout_width="fill_parent"
 		android:paddingBottom="5px" android:layout_height="wrap_content" />
-
 </RelativeLayout>

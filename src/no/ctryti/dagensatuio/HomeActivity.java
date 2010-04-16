@@ -2,125 +2,149 @@ package no.ctryti.dagensatuio;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.SimpleAdapter.ViewBinder;
 
 public class HomeActivity extends Activity {
 
-
 	private static final int REFRESH_ID = 1;
 	private static final int CLEAR_DB_ID = 2;
-
 	private static final String TAG = "HomeActivity";
 
-	DatabaseAdapter mDbAdapter;
+	private String months[], weekdays[];
+	private DatabaseAdapter mDbAdapter;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+
 		super.onCreate(savedInstanceState);
+		mDbAdapter = new DatabaseAdapter(this); 
+
 		setContentView(R.layout.home_activity);
 
-		String[] weekDays = getResources().getStringArray(R.array.weekdays);
+		ArrayList<DinnerItem> items = mDbAdapter.getItems("Frederikke kaf\u00e9", null);
 
-		/* The list of dishes */
-		mDbAdapter = new DatabaseAdapter(this);
-		//ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlace("SV Kafeen");
+		/* populate the screen! (if there is anything to display */
+		if(items.size() != 0) {
 
+			months = getResources().getStringArray(R.array.months);
+			weekdays = getResources().getStringArray(R.array.weekdays);
 
-		if (mDbAdapter == null) { 
-			new RefreshDbTask(mDbAdapter).execute();
-		} else if (mDbAdapter != null) {
-			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay("SV Kafeen", "Mandag");
-			if (items.size() > 0) {
-				TextView home_bottom = (TextView) findViewById(R.id.period);
-				home_bottom.setText("SV Kafeen");
-				TextView top_tv = (TextView)findViewById(R.id.home_bottom);
+			SeparatedListAdapter adapter = new SeparatedListAdapter(this);
 
-				top_tv.setText(items.get(0).getPeriod());
+			TextView top_tv = (TextView)findViewById(R.id.period);
 
-				System.out.println("Items:");
-				for(DinnerItem item : items)  
-					Log.i(TAG, item.getDescription());
+			//RelativeLayout bottom_row = (RelativeLayout)findViewById(R.id.home_bottom);
+			TextView bottom_tv = (TextView)findViewById(R.id.home_bottom);
 
-				ListView list = (ListView)findViewById(R.id.dish_list);
+			ListView list = (ListView)findViewById(R.id.home_list);
 
-				if(list != null) {
-					DinnerItemAdapter adapter = new DinnerItemAdapter(this, R.layout.custom_list_row, items);
-					list.setAdapter(adapter);
-				}
+			top_tv.setText(createPeriodString(items.get(0).getPeriod()));
+			bottom_tv.setText(items.get(0).getPlace());
 
-				/*Grid of days */ 
-				GridView days = (GridView) findViewById(R.id.days_list);
-				days.setAdapter(new ImageAdapter(this, R.layout.days_item, Arrays.asList(weekDays)));
-				days.setOnItemClickListener(new GridItemListener(this));
+			/* Split the items into their respective days, add them */
+			ArrayList<ArrayList<DinnerItem>> separatedItems = new ArrayList<ArrayList<DinnerItem>>();
+			for(int i = 0; i < weekdays.length; i++) {
+				separatedItems.add(new ArrayList<DinnerItem>());
+			}			
+			for(DinnerItem item : items) {
+				separatedItems.get(item.getDay()-1).add(item);
+			}			
+			for(int i = 0; i < weekdays.length; i++)
+				adapter.addSection(weekdays[i], new DinnerItemAdapter(this, separatedItems.get(i)));
 
-				/* Café button (home icon) */
-				RelativeLayout right_layout = (RelativeLayout) findViewById(R.id.right_button_layout);
-				ImageButton home_button = (ImageButton) findViewById(R.id.right_button);
-				home_button.setOnClickListener(new HomeButtonListener(this));
-			}
+			System.out.println(list);
+			list.setAdapter(adapter);
+
+			/*Grid of days */
+			GridView days = (GridView) findViewById(R.id.days_list);
+			days.setAdapter(new ImageAdapter(this, R.layout.days_item, Arrays.asList(weekdays)));
+			
+			ImageButton placesButton = (ImageButton) findViewById(R.id.right_button);
+			placesButton.setOnClickListener(new ButtonListener(this));
 		}
-
 	}
 
-	private class HomeButtonListener implements View.OnClickListener {
+
+	/* TODO: Needs severe improvement */
+	class ButtonListener implements android.view.View.OnClickListener {
 		private Context mCtx;
-
-
-		public HomeButtonListener(Context ctx) {
-			this.mCtx = ctx;
+		
+		ButtonListener(Context ctx) {
+			mCtx = ctx;
 		}
-
-
-		/* TODO: Needs severe improvement */
+		
+		
 		@Override
 		public void onClick(View v) {
-			AlertDialog.Builder placesDialog = new AlertDialog.Builder(mCtx);
+			final AlertDialog.Builder placesDialog = new AlertDialog.Builder(mCtx);
 			String[] places = getResources().getStringArray(R.array.placesnames);
 			placesDialog.setTitle("Velg et sted");
+
 			placesDialog.setItems(places, new DialogInterface.OnClickListener() {
 
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					String[] places = getResources().getStringArray(R.array.placesnames);
-					ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(places[which], "Mandag");
-					ListView list = (ListView)findViewById(R.id.dish_list);
+					ArrayList<DinnerItem> items = mDbAdapter.getItems(places[which], null);
+					ListView list = (ListView)findViewById(R.id.home_list);
 					if(list != null) {
-						DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
+						months = getResources().getStringArray(R.array.months);
+						weekdays = getResources().getStringArray(R.array.weekdays);
+
+						SeparatedListAdapter adapter = new SeparatedListAdapter(mCtx);
+
+						TextView top_tv = (TextView)findViewById(R.id.period);
+
+						//RelativeLayout bottom_row = (RelativeLayout)findViewById(R.id.home_bottom);
+						TextView bottom_tv = (TextView)findViewById(R.id.home_bottom);
+
+						top_tv.setText(createPeriodString(items.get(0).getPeriod()));
+						bottom_tv.setText(items.get(0).getPlace());
+
+						/* Split the items into their respective days, add them */
+						ArrayList<ArrayList<DinnerItem>> separatedItems = new ArrayList<ArrayList<DinnerItem>>();
+						for(int i = 0; i < weekdays.length; i++) {
+							separatedItems.add(new ArrayList<DinnerItem>());
+						}			
+						for(DinnerItem item : items) {
+							separatedItems.get(item.getDay()-1).add(item);
+						}			
+						for(int i = 0; i < weekdays.length; i++)
+							adapter.addSection(weekdays[i], new DinnerItemAdapter(mCtx, separatedItems.get(i)));
+
 						list.setAdapter(adapter);
 						TextView home_bottom = (TextView) findViewById(R.id.period);
 						home_bottom.setText(places[which]);
 					}
-					dialog.cancel();
-				}
-			});
 
-			System.out.println("Home Button Clicked");
+				} 
+
+			});	
 			AlertDialog al = placesDialog.create();
 			al.show();
 		}
-
 	}
 
 	protected class ImageAdapter extends BaseAdapter {
@@ -167,45 +191,158 @@ public class HomeActivity extends Activity {
 
 	}
 
-	protected class DinnerItemAdapter extends BaseAdapter {
+	private String createPeriodString(String period) {
 
+		int year = Integer.parseInt(period.substring(0, 4));
+		int week = Integer.parseInt(period.substring(4,6));
+		String month;
+		Calendar cal = new GregorianCalendar(); 
+		cal.setMinimalDaysInFirstWeek(3);
+
+		cal.set(Calendar.YEAR, year);
+		cal.set(Calendar.WEEK_OF_YEAR, week);
+		cal.set(Calendar.DAY_OF_WEEK, Calendar.FRIDAY);
+		month = months[cal.get(Calendar.MONTH)];
+
+		return "Uke "+week+": "+(cal.get(Calendar.DAY_OF_MONTH)-4)+". - "+cal.get(Calendar.DAY_OF_MONTH)+". "+month;
+	}
+
+	/* props to Jeff Sharkey (http://jsharkey.org/blog/2008/08/18/separating-lists-with-headers-in-android-09/)
+	 * for this adapter */
+	public class SeparatedListAdapter extends BaseAdapter {
+
+		public final Map<String,Adapter> sections = new LinkedHashMap<String,Adapter>();
+		public final ArrayAdapter<String> headers;
+		public final static int TYPE_SECTION_HEADER = 0;
+
+		public SeparatedListAdapter(Context context) {
+			headers = new ArrayAdapter<String>(context, R.layout.list_header);
+		}
+
+		public void addSection(String section, Adapter adapter) {
+			this.headers.add(section);
+			this.sections.put(section, adapter);
+		}
+
+		public Object getItem(int position) {
+			for(Object section : this.sections.keySet()) {
+				Adapter adapter = sections.get(section);
+				int size = adapter.getCount() + 1;
+
+				// check if position inside this section
+				if(position == 0) return section;
+				if(position < size) return adapter.getItem(position - 1);
+
+				// otherwise jump into next section
+				position -= size;
+			}
+			return null;
+		}
+
+		public int getCount() {
+			// total together all sections, plus one for each section header
+			int total = 0;
+			for(Adapter adapter : this.sections.values())
+				total += adapter.getCount() + 1;
+			return total;
+		}
+
+		public int getViewTypeCount() {
+			// assume that headers count as one, then total all sections
+			int total = 1;
+			for(Adapter adapter : this.sections.values())
+				total += adapter.getViewTypeCount();
+			return total;
+		}
+
+		public int getItemViewType(int position) {
+			int type = 1;
+			for(Object section : this.sections.keySet()) {
+				Adapter adapter = sections.get(section);
+				int size = adapter.getCount() + 1;
+
+				// check if position inside this section
+				if(position == 0) return TYPE_SECTION_HEADER;
+				if(position < size) return type + adapter.getItemViewType(position - 1);
+
+				// otherwise jump into next section
+				position -= size;
+				type += adapter.getViewTypeCount();
+			}
+			return -1;
+		}
+
+		public boolean areAllItemsSelectable() {
+			return false;
+		}
+
+		public boolean isEnabled(int position) {
+			//return (getItemViewType(position) != TYPE_SECTION_HEADER);
+			return false;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			int sectionnum = 0;
+			for(Object section : this.sections.keySet()) {
+				Adapter adapter = sections.get(section);
+				int size = adapter.getCount() + 1;
+
+				// check if position inside this section
+				if(position == 0) return headers.getView(sectionnum, convertView, parent);
+				if(position < size) return adapter.getView(position - 1, convertView, parent);
+
+				// otherwise jump into next section
+				position -= size;
+				sectionnum++;
+			}
+			return null;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return position;
+		}
+	}
+
+	private class DinnerItemAdapter extends BaseAdapter {
 		private Context mCtx;
 		private List<DinnerItem> mList;
 
-		public DinnerItemAdapter(Context ctx, int rowResID, List<DinnerItem> list) {
+		public DinnerItemAdapter(Context ctx,  List<DinnerItem> list) {
 			mCtx = ctx;
 			mList = list;
 		}
+		@Override public int getCount() { return mList.size(); }
+		@Override public Object getItem(int position) { return mList.get(position); }
+		@Override public long getItemId(int position) { return position; }
 
 		@Override
-		public int getCount() {
-			return mList.size();
+		public boolean isEnabled(int position) {
+			return false;
 		}
 
 		@Override
-		public Object getItem(int arg0) {
-			return mList.get(arg0);
-		}
+		public View getView(int position, View convertView, ViewGroup parent) {
+			DinnerItem item = mList.get(position);
+			View row = convertView; 
+			ViewHolder holder = null;
 
-		@Override
-		public long getItemId(int arg0) {
-			return arg0;
-		}
-
-		@Override
-		public View getView(int pos, View convertView, ViewGroup parent) {
-			DinnerItem item = mList.get(pos);
-			View row = convertView;  
-			if(row == null)	
+			if(row == null) {	
 				row = View.inflate(mCtx, R.layout.custom_list_row, null);
-
-			TextView type = (TextView)row.findViewById(R.id.type);
-			type.setText(item.getType());
-			TextView desc = (TextView)row.findViewById(R.id.desc);
-			desc.setText(item.getDescription());
+				holder = new ViewHolder(row);
+				row.setTag(holder);
+			} else {
+				holder = (ViewHolder)row.getTag();
+			}
+			//TextView type = (TextView)row.findViewById(R.id.type);
+			holder.getTypeView().setText(item.getType());
+			//TextView desc = (TextView)row.findViewById(R.id.desc);
+			holder.getDescView().setText(item.getDescription());
 			return row;
 		}
 	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -229,25 +366,23 @@ public class HomeActivity extends Activity {
 		return true;
 	}
 
-	private class GridItemListener implements AdapterView.OnItemClickListener {
-		Context mCtx;
+	class ViewHolder {
+		View base;
+		TextView type;
+		TextView desc;
 
-		public GridItemListener(Context ctx) {
-			mCtx = ctx;
+		ViewHolder(View base) {
+			this.base = base;
 		}
- 
-		@Override
-		public void onItemClick(AdapterView parent, View v, int pos,
-				long rowID) {
-			String[] weekDays = getResources().getStringArray(R.array.weekdays_full); 
-			TextView tv = (TextView) findViewById(R.id.period);
-			String place = tv.getText().toString();
-			ArrayList<DinnerItem> items = mDbAdapter.getAllFromPlaceAtDay(place, weekDays[pos]);
-			ListView list = (ListView)findViewById(R.id.dish_list);
-			if(list != null) {
-				DinnerItemAdapter adapter = new DinnerItemAdapter(mCtx, R.layout.custom_list_row, items);
-		 		list.setAdapter(adapter);
-			}
+		public TextView getTypeView() {
+			if(type == null)
+				type = (TextView)base.findViewById(R.id.type);
+			return type;
+		}
+		public TextView getDescView() {
+			if(desc == null)
+				desc = (TextView)base.findViewById(R.id.desc);
+			return desc;
 		}
 	}
 }
